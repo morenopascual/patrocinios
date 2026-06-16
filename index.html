@@ -1,0 +1,455 @@
+<svg style="display:none"></svg>
+<div id="app-root">
+<style>
+  :root{
+    --ink:#0f2540; --ink-2:#1b3b62; --paper:#eef1f6; --card:#ffffff;
+    --line:#d8dfe9; --line-soft:#e7ecf3; --text:#172435; --muted:#647285;
+    --accent:#0e8a68; --accent-soft:#e3f3ed;
+    --amber:#b7790f; --amber-soft:#fbf0db;
+    --rose:#b03e4c; --rose-soft:#fae4e6;
+    --slate:#516079; --slate-soft:#e9edf3;
+    --radius:10px;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  #app-root{font-family:var(--sans);color:var(--text);background:var(--paper);
+    margin:0;padding:0;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1240px;margin:0 auto;padding:18px 16px 60px}
+
+  /* ---- header ---- */
+  .head{background:linear-gradient(135deg,var(--ink),var(--ink-2));color:#fff;
+    border-radius:var(--radius);padding:22px 24px;box-shadow:0 8px 28px rgba(15,37,64,.18)}
+  .head .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:#9fb6d4;font-weight:700}
+  .head h1{margin:4px 0 2px;font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .head p{margin:0;color:#bcccdf;font-size:13px}
+
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}
+  .kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+    border-radius:8px;padding:11px 13px}
+  .kpi .label{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:#a9bdd8;font-weight:700}
+  .kpi .val{font-size:22px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+  .kpi .sub{font-size:11px;color:#9fb6d4;margin-top:1px}
+  .kpi.accent .val{color:#5fe0b4}
+
+  /* ---- toolbar ---- */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 12px;justify-content:space-between}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:var(--card);color:var(--muted);
+    border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer;
+    transition:.12s}
+  .chip:hover{border-color:var(--ink-2);color:var(--ink)}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .search{border:1px solid var(--line);border-radius:8px;padding:7px 11px;font-size:13px;
+    min-width:180px;background:var(--card);font-family:var(--sans);color:var(--text)}
+  .search:focus{outline:2px solid var(--ink-2);outline-offset:0;border-color:var(--ink-2)}
+  select.statefilter{border:1px solid var(--line);border-radius:8px;padding:7px 28px 7px 11px;
+    font-size:13px;background:var(--card);color:var(--text);font-family:var(--sans);cursor:pointer}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.12s}
+  .btn:hover{border-color:var(--ink-2);background:#f5f8fc}
+  .btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+  .btn.primary:hover{background:var(--ink-2)}
+  .btn.ghost{color:var(--rose);border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--rose);background:var(--rose-soft)}
+
+  .banner{display:none;background:var(--amber-soft);border:1px solid #ecd9ab;
+    color:#7a5408;border-radius:8px;padding:9px 13px;font-size:12.5px;margin-bottom:12px}
+
+  /* ---- table ---- */
+  .tablecard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;box-shadow:0 4px 16px rgba(15,37,64,.06)}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:920px}
+  thead th{background:#f4f7fb;text-align:left;font-size:10.5px;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--muted);font-weight:800;padding:11px 12px;
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
+  tbody td{padding:7px 12px;border-bottom:1px solid var(--line-soft);font-size:13px;vertical-align:middle}
+  tbody tr:hover{background:#f9fbfd}
+  tr.catstart td{border-top:2px solid var(--ink)}
+  .catcell{font-weight:800;color:var(--ink);font-size:12.5px;white-space:nowrap}
+  .catcell small{display:block;font-weight:600;color:var(--muted);font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.05em}
+  .poscell{color:var(--muted);font-weight:600;white-space:nowrap}
+
+  td input.cell{border:1px solid transparent;background:transparent;border-radius:6px;
+    padding:5px 7px;font-size:13px;font-family:var(--sans);color:var(--text);width:100%}
+  td input.cell:hover{border-color:var(--line)}
+  td input.cell:focus{outline:none;border-color:var(--ink-2);background:#fff;
+    box-shadow:0 0 0 2px rgba(27,59,98,.12)}
+  td input.money{font-variant-numeric:tabular-nums;text-align:right;max-width:96px;font-weight:600}
+  td .notes{color:var(--muted);min-width:140px}
+
+  select.badge{appearance:none;border:1px solid transparent;border-radius:99px;
+    padding:4px 24px 4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;
+    font-family:var(--sans);background-position:right 7px center;background-repeat:no-repeat;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23667' fill='none' stroke-width='1.6'/></svg>")}
+  .s-confirmado{background:var(--accent-soft);color:#0a6a4f;border-color:#bce4d6}
+  .s-negociacion{background:var(--amber-soft);color:#8a5c07;border-color:#ecd9ab}
+  .s-vacante{background:var(--rose-soft);color:#8c2f3a;border-color:#f0c6cb}
+  .s-incluido,.s-regalo{background:var(--slate-soft);color:#3e4c63;border-color:#cfd8e6}
+  .c-firmado{background:var(--accent-soft);color:#0a6a4f;border-color:#bce4d6}
+  .c-pendiente{background:var(--amber-soft);color:#8a5c07;border-color:#ecd9ab}
+  .c-no{background:#f1f3f7;color:#6b7688;border-color:#dde3ec}
+
+  .del{border:none;background:none;color:#b9c2cf;cursor:pointer;font-size:16px;
+    line-height:1;padding:4px 6px;border-radius:6px}
+  .del:hover{color:var(--rose);background:var(--rose-soft)}
+
+  tfoot td{padding:12px;font-weight:800;font-size:13px;background:#f4f7fb;
+    border-top:2px solid var(--ink);font-variant-numeric:tabular-nums}
+  .foot-actions{display:flex;justify-content:space-between;align-items:center;
+    padding:14px 4px 0;flex-wrap:wrap;gap:10px}
+  .savestate{font-size:12px;color:var(--muted)}
+  .savestate b{color:var(--accent)}
+  .legend{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.7}
+  .legend b{color:var(--text)}
+
+  @media(max-width:860px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .head h1{font-size:22px}
+  }
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <div class="eyebrow">Seguimiento de patrocinios · temporada actual</div>
+    <h1>Patrocinadores por equipación</h1>
+    <p>Posición × categoría · estado de acuerdo, contrato y valor anual</p>
+    <div class="kpis" id="kpis"></div>
+  </div>
+
+  <div id="memBanner" class="banner">
+    ⚠️ No se ha podido conectar el almacenamiento persistente: los cambios se mantienen solo durante esta sesión. Usa <b>Exportar CSV</b> para no perderlos.
+  </div>
+
+  <div class="toolbar">
+    <div class="chips" id="catChips"></div>
+    <div class="controls">
+      <select class="statefilter" id="stateFilter">
+        <option value="all">Todos los estados</option>
+        <option value="confirmado">Confirmado</option>
+        <option value="negociacion">En negociación</option>
+        <option value="incluido">Incluido (máster)</option>
+        <option value="regalo">Regalo</option>
+        <option value="vacante">Vacante</option>
+      </select>
+      <input class="search" id="search" placeholder="Buscar patrocinador…" />
+      <button class="btn" id="addBtn">+ Fila</button>
+      <button class="btn primary" id="csvBtn">Exportar CSV</button>
+      <button class="btn ghost" id="resetBtn">Restablecer</button>
+    </div>
+  </div>
+
+  <div class="tablecard">
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th>Posición</th>
+            <th>Patrocinador</th>
+            <th style="text-align:right">Valor anual</th>
+            <th>Acuerdo</th>
+            <th>Contrato</th>
+            <th>Notas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Total comprometido</td>
+            <td style="text-align:right" id="footTotal">—</td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="foot-actions">
+    <div class="savestate" id="saveState">Listo</div>
+  </div>
+
+  <div class="legend">
+    <b>Cómo se usa:</b> escribe directamente en patrocinador, valor y notas; cambia los desplegables de acuerdo y contrato. Todo se guarda automáticamente.<br>
+    <b>Acuerdo máster Espacio Torrelodones:</b> los 6.000 € cubren el pecho de SUB14, SUB16, SUB18, Sénior M y Sénior F. Cargados en SUB14·Pecho; el resto figura como <i>Incluido (0 €)</i> para no duplicar.
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  var KEY = "patrocinios_seguimiento_v1";
+
+  var SEED = [
+    // ESCUELA
+    {c:"ESCUELA",cl:"Escuela",p:"Pecho",s:"4 Llaves",v:1200,a:"negociacion",ct:"no",n:""},
+    {c:"ESCUELA",cl:"Escuela",p:"Espalda 1",s:"Cabañas con Encanto",v:900,a:"negociacion",ct:"no",n:""},
+    {c:"ESCUELA",cl:"Escuela",p:"Espalda 2",s:"Sierra Bus",v:600,a:"negociacion",ct:"no",n:""},
+    {c:"ESCUELA",cl:"Escuela",p:"Manga comercial",s:"SIC",v:0,a:"negociacion",ct:"no",n:""},
+    {c:"ESCUELA",cl:"Escuela",p:"Manga ONG/Escuela",s:"Martita",v:0,a:"negociacion",ct:"no",n:"Patrocinio social"},
+    // SUB14
+    {c:"SUB14",cl:"Sub-14",p:"Pecho",s:"Espacio Torrelodones",v:6000,a:"negociacion",ct:"no",n:"Acuerdo máster pecho (cubre SUB14-SF)"},
+    {c:"SUB14",cl:"Sub-14",p:"Espalda 1",s:"Goleta",v:900,a:"negociacion",ct:"no",n:""},
+    {c:"SUB14",cl:"Sub-14",p:"Espalda 2",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"SUB14",cl:"Sub-14",p:"Manga comercial",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"SUB14",cl:"Sub-14",p:"Manga ONG/Escuela",s:"Martita",v:500,a:"negociacion",ct:"no",n:"Patrocinio social"},
+    // SUB16
+    {c:"SUB16",cl:"Sub-16",p:"Pecho",s:"Espacio Torrelodones",v:0,a:"incluido",ct:"no",n:"Incluido en acuerdo máster"},
+    {c:"SUB16",cl:"Sub-16",p:"Espalda 1",s:"Especias de la India",v:900,a:"negociacion",ct:"no",n:""},
+    {c:"SUB16",cl:"Sub-16",p:"Espalda 2",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"SUB16",cl:"Sub-16",p:"Manga comercial",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"SUB16",cl:"Sub-16",p:"Manga ONG/Escuela",s:"Así",v:0,a:"negociacion",ct:"no",n:"Patrocinio social"},
+    // SUB18
+    {c:"SUB18",cl:"Sub-18",p:"Pecho",s:"Espacio Torrelodones",v:0,a:"incluido",ct:"no",n:"Incluido en acuerdo máster"},
+    {c:"SUB18",cl:"Sub-18",p:"Espalda 1",s:"Goleta",v:900,a:"negociacion",ct:"no",n:""},
+    {c:"SUB18",cl:"Sub-18",p:"Espalda 2",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"SUB18",cl:"Sub-18",p:"Manga comercial",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"SUB18",cl:"Sub-18",p:"Manga ONG/Escuela",s:"Así",v:0,a:"negociacion",ct:"no",n:"Patrocinio social"},
+    // SÉNIOR MASCULINO
+    {c:"SMASC",cl:"Sénior M",p:"Pecho",s:"Espacio Torrelodones",v:0,a:"incluido",ct:"no",n:"Incluido en acuerdo máster"},
+    {c:"SMASC",cl:"Sénior M",p:"Espalda 1",s:"Baelo",v:700,a:"negociacion",ct:"no",n:""},
+    {c:"SMASC",cl:"Sénior M",p:"Espalda 2",s:"La Lola",v:700,a:"negociacion",ct:"no",n:""},
+    {c:"SMASC",cl:"Sénior M",p:"Manga comercial",s:"Cean",v:200,a:"negociacion",ct:"no",n:""},
+    {c:"SMASC",cl:"Sénior M",p:"Manga ONG/Escuela",s:"Así",v:0,a:"negociacion",ct:"no",n:"Patrocinio social"},
+    // SÉNIOR FEMENINO
+    {c:"SFEM",cl:"Sénior F",p:"Pecho",s:"Espacio Torrelodones",v:0,a:"incluido",ct:"no",n:"Incluido en acuerdo máster"},
+    {c:"SFEM",cl:"Sénior F",p:"Espalda 1",s:"Graciana",v:700,a:"negociacion",ct:"no",n:""},
+    {c:"SFEM",cl:"Sénior F",p:"Espalda 2",s:"The Big Boss",v:600,a:"negociacion",ct:"no",n:""},
+    {c:"SFEM",cl:"Sénior F",p:"Manga comercial",s:"Cean",v:200,a:"negociacion",ct:"no",n:""},
+    {c:"SFEM",cl:"Sénior F",p:"Manga ONG/Escuela",s:"Así",v:0,a:"negociacion",ct:"no",n:"Patrocinio social"},
+    // VETERANOS
+    {c:"VET",cl:"Veteranos",p:"Pecho",s:"Famed",v:700,a:"negociacion",ct:"no",n:""},
+    {c:"VET",cl:"Veteranos",p:"Espalda 1",s:"Blayfer",v:700,a:"negociacion",ct:"no",n:""},
+    {c:"VET",cl:"Veteranos",p:"Espalda 2",s:"Motel Peñascales",v:700,a:"negociacion",ct:"no",n:""},
+    {c:"VET",cl:"Veteranos",p:"Manga comercial",s:"La Plata",v:400,a:"negociacion",ct:"no",n:""},
+    {c:"VET",cl:"Veteranos",p:"Manga ONG/Escuela",s:"CDC",v:0,a:"negociacion",ct:"no",n:"Patrocinio social"},
+    // TOUCH
+    {c:"TOUCH",cl:"Touch / CDC",p:"Pecho",s:"Espacio Torrelodones",v:0,a:"incluido",ct:"no",n:""},
+    {c:"TOUCH",cl:"Touch / CDC",p:"Espalda 1",s:"Zeppelin",v:0,a:"regalo",ct:"no",n:"Regalo"},
+    {c:"TOUCH",cl:"Touch / CDC",p:"Espalda 2",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"TOUCH",cl:"Touch / CDC",p:"Manga comercial",s:"",v:0,a:"vacante",ct:"no",n:""},
+    {c:"TOUCH",cl:"Touch / CDC",p:"Manga ONG/Escuela",s:"",v:0,a:"vacante",ct:"no",n:""}
+  ];
+
+  var ACUERDOS = [["confirmado","Confirmado"],["negociacion","En negociación"],
+    ["incluido","Incluido (máster)"],["regalo","Regalo"],["vacante","Vacante"]];
+  var CONTRATOS = [["firmado","Firmado"],["pendiente","Pendiente firma"],["no","Sin contrato"]];
+
+  var state = [];
+  var hasStorage = false;
+  try{ var _t="__t"; window.localStorage.setItem(_t,"1"); window.localStorage.removeItem(_t); hasStorage=true; }catch(e){ hasStorage=false; }
+  var memStore = null;
+  var filterCat = "all", filterState = "all", q = "";
+  var saveTimer = null;
+
+  var eur = new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+
+  function uid(){return "r"+Math.random().toString(36).slice(2,9);}
+
+  function withIds(arr){return arr.map(function(r){var o={};for(var k in r)o[k]=r[k];o.id=uid();return o;});}
+
+  async function load(){
+    if(hasStorage){
+      try{
+        var raw = window.localStorage.getItem(KEY);
+        if(raw){ state = JSON.parse(raw); return; }
+      }catch(e){ /* corrupto -> seed */ }
+      state = withIds(SEED);
+      await persist(true);
+      return;
+    }
+    document.getElementById("memBanner").style.display="block";
+    state = memStore || withIds(SEED);
+  }
+
+  async function persist(silent){
+    var json = JSON.stringify(state);
+    if(hasStorage){
+      try{ window.localStorage.setItem(KEY, json); }
+      catch(e){ setSave("Error al guardar"); return; }
+    } else { memStore = JSON.parse(json); }
+    if(!silent) setSave("Guardado ✓");
+  }
+
+  function setSave(t){
+    var el=document.getElementById("saveState");
+    el.innerHTML = t.indexOf("Guardado")===0 ? "<b>"+t+"</b>" : t;
+  }
+  function queueSave(){
+    setSave("Guardando…");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){ persist(false); }, 350);
+  }
+
+  function row(id){return state.filter(function(r){return r.id===id;})[0];}
+
+  function computeKpis(){
+    var total=0,confirmado=0,firmados=0,conPatro=0,vacantes=0,negoc=0;
+    state.forEach(function(r){
+      var v = Number(r.v)||0; total+=v;
+      if(r.a==="confirmado") confirmado+=v;
+      if(r.a==="negociacion") negoc++;
+      var occupied = r.s && r.s.trim() && r.a!=="vacante";
+      if(occupied) conPatro++;
+      if(r.a==="vacante" || !(r.s&&r.s.trim())) vacantes++;
+      if(r.ct==="firmado") firmados++;
+    });
+    return {total:total,confirmado:confirmado,firmados:firmados,conPatro:conPatro,vacantes:vacantes,negoc:negoc};
+  }
+
+  function renderKpis(){
+    var k=computeKpis();
+    var pct = k.total>0 ? Math.round(k.confirmado/k.total*100) : 0;
+    document.getElementById("kpis").innerHTML =
+      kpi("Valor total","",eur.format(k.total),"comprometido")
+      + kpi("Confirmado","accent",eur.format(k.confirmado),pct+"% del valor")
+      + kpi("Contratos firmados","",k.firmados+" / "+k.conPatro,"huecos con patrocinador")
+      + kpi("En negociación","",k.negoc,"por cerrar")
+      + kpi("Vacantes","",k.vacantes,"sin patrocinador");
+    document.getElementById("footTotal").textContent = eur.format(k.total);
+  }
+  function kpi(label,cls,val,sub){
+    return '<div class="kpi '+cls+'"><div class="label">'+label+'</div>'
+      +'<div class="val">'+val+'</div><div class="sub">'+sub+'</div></div>';
+  }
+
+  function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+  function visibleRows(){
+    var ql=q.trim().toLowerCase();
+    return state.filter(function(r){
+      if(filterCat!=="all" && r.c!==filterCat) return false;
+      if(filterState!=="all" && r.a!==filterState) return false;
+      if(ql && (r.s||"").toLowerCase().indexOf(ql)<0) return false;
+      return true;
+    });
+  }
+
+  function selectHTML(cls,prefix,opts,val,id,field){
+    var h='<select class="badge '+prefix+val+'" data-id="'+id+'" data-f="'+field+'">';
+    opts.forEach(function(o){
+      h+='<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+o[1]+'</option>';
+    });
+    return h+'</select>';
+  }
+
+  function render(){
+    var rows=visibleRows(), prevCat=null, html="";
+    rows.forEach(function(r){
+      var newCat = r.c!==prevCat; prevCat=r.c;
+      html+='<tr'+(newCat?' class="catstart"':'')+'>'
+        +'<td>'+(newCat?'<div class="catcell">'+esc(r.cl)+'<small>'+esc(r.c)+'</small></div>':'')+'</td>'
+        +'<td class="poscell">'+esc(r.p)+'</td>'
+        +'<td><input class="cell" data-id="'+r.id+'" data-f="s" value="'+esc(r.s)+'" placeholder="—"></td>'
+        +'<td><input class="cell money" type="number" min="0" step="50" data-id="'+r.id+'" data-f="v" value="'+(Number(r.v)||0)+'"></td>'
+        +'<td>'+selectHTML("","s-",ACUERDOS,r.a,r.id,"a")+'</td>'
+        +'<td>'+selectHTML("","c-",CONTRATOS,r.ct,r.id,"ct")+'</td>'
+        +'<td><input class="cell notes" data-id="'+r.id+'" data-f="n" value="'+esc(r.n)+'" placeholder="—"></td>'
+        +'<td><button class="del" data-del="'+r.id+'" title="Eliminar fila">×</button></td>'
+        +'</tr>';
+    });
+    if(!rows.length) html='<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--muted)">Sin resultados con estos filtros.</td></tr>';
+    document.getElementById("tbody").innerHTML=html;
+    renderKpis();
+  }
+
+  function renderChips(){
+    var cats=[]; state.forEach(function(r){if(cats.indexOf(r.c)<0)cats.push(r.c);});
+    var labels={}; state.forEach(function(r){labels[r.c]=r.cl;});
+    var h='<button class="chip'+(filterCat==="all"?" on":"")+'" data-cat="all">Todas</button>';
+    cats.forEach(function(c){
+      h+='<button class="chip'+(filterCat===c?" on":"")+'" data-cat="'+c+'">'+esc(labels[c])+'</button>';
+    });
+    document.getElementById("catChips").innerHTML=h;
+  }
+
+  // ---- events ----
+  document.getElementById("tbody").addEventListener("input",function(e){
+    var t=e.target, id=t.getAttribute("data-id"), f=t.getAttribute("data-f");
+    if(!id||!f) return;
+    var r=row(id); if(!r) return;
+    r[f] = (f==="v") ? (Number(t.value)||0) : t.value;
+    if(f==="v" || f==="s") renderKpis();
+    queueSave();
+  });
+  document.getElementById("tbody").addEventListener("change",function(e){
+    var t=e.target, id=t.getAttribute("data-id"), f=t.getAttribute("data-f");
+    if(!id||!f) return;
+    var r=row(id); if(!r) return;
+    r[f]=t.value;
+    if(f==="a"){ t.className="badge s-"+t.value; }
+    if(f==="ct"){ t.className="badge c-"+t.value; }
+    renderKpis(); queueSave();
+  });
+  document.getElementById("tbody").addEventListener("click",function(e){
+    var id=e.target.getAttribute("data-del"); if(!id) return;
+    var r=row(id);
+    if(confirm("¿Eliminar la fila “"+(r&&r.cl?r.cl+" · "+r.p:"")+"”?")){
+      state=state.filter(function(x){return x.id!==id;});
+      render(); queueSave();
+    }
+  });
+
+  document.getElementById("catChips").addEventListener("click",function(e){
+    var c=e.target.getAttribute("data-cat"); if(!c) return;
+    filterCat=c; renderChips(); render();
+  });
+  document.getElementById("stateFilter").addEventListener("change",function(e){
+    filterState=e.target.value; render();
+  });
+  document.getElementById("search").addEventListener("input",function(e){
+    q=e.target.value; render();
+  });
+
+  document.getElementById("addBtn").addEventListener("click",function(){
+    var base = filterCat!=="all" ? state.filter(function(r){return r.c===filterCat;})[0] : null;
+    var nr={id:uid(),c:base?base.c:"NUEVA",cl:base?base.cl:"Nueva categoría",
+      p:"Posición",s:"",v:0,a:"vacante",ct:"no",n:""};
+    var idx = base ? lastIndexOfCat(base.c)+1 : state.length;
+    state.splice(idx,0,nr);
+    render(); queueSave();
+  });
+  function lastIndexOfCat(c){var i=-1;state.forEach(function(r,k){if(r.c===c)i=k;});return i;}
+
+  document.getElementById("csvBtn").addEventListener("click",function(){
+    var head=["Categoría","Posición","Patrocinador","Valor anual (€)","Acuerdo","Contrato","Notas"];
+    var amap={};ACUERDOS.forEach(function(o){amap[o[0]]=o[1];});
+    var cmap={};CONTRATOS.forEach(function(o){cmap[o[0]]=o[1];});
+    var lines=[head.join(";")];
+    state.forEach(function(r){
+      lines.push([r.cl,r.p,r.s,(Number(r.v)||0),amap[r.a]||r.a,cmap[r.ct]||r.ct,r.n]
+        .map(function(x){return '"'+String(x).replace(/"/g,'""')+'"';}).join(";"));
+    });
+    var blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="patrocinios_"+new Date().toISOString().slice(0,10)+".csv";
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById("resetBtn").addEventListener("click",async function(){
+    if(!confirm("Esto descartará tus cambios y volverá a los datos iniciales. ¿Continuar?")) return;
+    state=withIds(SEED);
+    filterCat="all";filterState="all";q="";
+    document.getElementById("stateFilter").value="all";
+    document.getElementById("search").value="";
+    await persist(true); renderChips(); render(); setSave("Restablecido");
+  });
+
+  // ---- init ----
+  (async function(){
+    await load();
+    renderChips();
+    render();
+    setSave(hasStorage ? "Guardado ✓" : "Sesión temporal");
+  })();
+})();
+</script>
