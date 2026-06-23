@@ -128,7 +128,47 @@
   .legend{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.7}
   .legend b{color:var(--text)}
 
-  @media(max-width:860px){
+  .printmeta{display:none}
+
+  @media print{
+    @page{ size:A4 landscape; margin:11mm; }
+    #app-root{ background:#fff; }
+    .wrap{ max-width:none; padding:0; }
+    .toolbar,.foot-actions,.legend,#memBanner,.del,.caret{ display:none !important; }
+    .head{ background:#fff !important; color:#111 !important; box-shadow:none;
+      border:0; border-bottom:2px solid var(--ink); border-radius:0; padding:0 0 10px;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .head .eyebrow{ color:#555; }
+    .head h1{ color:var(--ink); margin-top:2px; }
+    .head p{ color:#555; }
+    .printmeta{ display:block; font-size:11px; color:#666; margin-top:4px; }
+    .kpis{ grid-template-columns:repeat(5,1fr); margin-top:10px; gap:8px; }
+    .kpi{ background:#fff !important; border:1px solid #c9d2de !important; }
+    .kpi .label,.kpi .sub{ color:#666 !important; }
+    .kpi .val{ color:var(--ink) !important; font-size:18px; }
+    .kpi.accent .val{ color:var(--accent) !important; }
+    .tablecard{ border:0; box-shadow:none; border-radius:0; margin-top:10px; }
+    .scroll{ overflow:visible; }
+    table{ min-width:0; width:100%; font-size:9.5px; }
+    thead th{ position:static; background:#eef2f7 !important; font-size:8px; padding:5px 6px;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tbody td{ padding:3px 6px; font-size:9.5px; }
+    tr{ break-inside:avoid; }
+    tr.catstart td{ border-top:1.5px solid var(--ink); }
+    input.cell,.cinput{ border:0 !important; background:transparent !important;
+      box-shadow:none !important; padding:1px 0; color:#111; width:auto; }
+    input.money{ text-align:right; }
+    .spwrap{ gap:0; }
+    select.badge{ background-image:none !important; padding:1px 7px; border-radius:99px;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .detailrow td{ background:#f4f7fb !important;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .contactbox{ padding:4px 8px; gap:12px; border-left-width:2px; }
+    .cfield{ min-width:0; flex:0 0 auto; }
+    .cfield span{ font-size:7px; }
+  }
+
+
     .kpis{grid-template-columns:repeat(2,1fr)}
     .head h1{font-size:22px}
   }
@@ -139,6 +179,7 @@
     <div class="eyebrow">Seguimiento de patrocinios · temporada actual</div>
     <h1>Patrocinadores por equipación</h1>
     <p>Posición × categoría · estado de acuerdo, contrato y valor anual</p>
+    <div class="printmeta" id="printMeta"></div>
     <div class="kpis" id="kpis"></div>
   </div>
 
@@ -159,6 +200,7 @@
       </select>
       <input class="search" id="search" placeholder="Buscar patrocinador…" />
       <button class="btn" id="addBtn">+ Fila</button>
+      <button class="btn" id="pdfBtn">Generar PDF</button>
       <button class="btn primary" id="csvBtn">Exportar CSV</button>
       <button class="btn ghost" id="resetBtn">Restablecer</button>
     </div>
@@ -474,6 +516,23 @@
     render(); queueSave();
   });
   function lastIndexOfCat(c){var i=-1;state.forEach(function(r,k){if(r.c===c)i=k;});return i;}
+
+  document.getElementById("pdfBtn").addEventListener("click",function(){
+    var savedExp = expanded, savedCat = filterCat, savedState = filterState, savedQ = q;
+    // Mostrar todo y desplegar solo las fichas con contacto
+    expanded = {}; state.forEach(function(r){ if(hasContact(r)) expanded[r.id]=true; });
+    filterCat = "all"; filterState = "all"; q = "";
+    var now = new Date();
+    document.getElementById("printMeta").textContent =
+      "Documento generado el " + now.toLocaleDateString("es-ES",{day:"2-digit",month:"long",year:"numeric"});
+    render();
+    function restore(){
+      expanded = savedExp; filterCat = savedCat; filterState = savedState; q = savedQ;
+      render(); window.removeEventListener("afterprint", restore);
+    }
+    window.addEventListener("afterprint", restore);
+    setTimeout(function(){ window.print(); }, 60);
+  });
 
   document.getElementById("csvBtn").addEventListener("click",function(){
     var head=["Categoría","Posición","Patrocinador","Valor anual (€)","Acuerdo","Contrato","Emitida factura","Pagado","Persona de contacto","Email","Teléfono","Comentarios"];
