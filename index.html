@@ -64,7 +64,7 @@
   .tablecard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
     overflow:hidden;box-shadow:0 4px 16px rgba(15,37,64,.06)}
   .scroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;min-width:920px}
+  table{width:100%;border-collapse:collapse;min-width:1080px}
   thead th{background:#f4f7fb;text-align:left;font-size:10.5px;letter-spacing:.07em;
     text-transform:uppercase;color:var(--muted);font-weight:800;padding:11px 12px;
     border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
@@ -84,6 +84,22 @@
   td input.money{font-variant-numeric:tabular-nums;text-align:right;max-width:96px;font-weight:600}
   td .notes{color:var(--muted);min-width:140px}
 
+  .spwrap{display:flex;align-items:center;gap:2px}
+  .caret{border:none;background:none;cursor:pointer;color:#aeb8c6;font-size:11px;
+    line-height:1;padding:4px 4px;border-radius:6px;transition:transform .15s,color .15s;flex:0 0 auto}
+  .caret:hover{color:var(--ink);background:#eef2f7}
+  .caret.open{transform:rotate(90deg)}
+  .caret.filled{color:var(--accent)}
+  .detailrow td{background:#f6f9fc;border-bottom:1px solid var(--line-soft);padding:0}
+  .contactbox{display:flex;flex-wrap:wrap;gap:14px;padding:10px 12px 12px;
+    border-left:3px solid var(--accent);margin:2px 0}
+  .cfield{display:flex;flex-direction:column;gap:3px;min-width:200px;flex:1 1 200px}
+  .cfield span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);font-weight:700}
+  .cinput{border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:13px;
+    font-family:var(--sans);color:var(--text);background:#fff;width:100%}
+  .cinput:focus{outline:none;border-color:var(--ink-2);box-shadow:0 0 0 2px rgba(27,59,98,.12)}
+
   select.badge{appearance:none;border:1px solid transparent;border-radius:99px;
     padding:4px 24px 4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;
     font-family:var(--sans);background-position:right 7px center;background-repeat:no-repeat;
@@ -95,6 +111,9 @@
   .c-firmado{background:var(--accent-soft);color:#0a6a4f;border-color:#bce4d6}
   .c-pendiente{background:var(--amber-soft);color:#8a5c07;border-color:#ecd9ab}
   .c-no{background:#f1f3f7;color:#6b7688;border-color:#dde3ec}
+  .f-si,.p-si{background:var(--accent-soft);color:#0a6a4f;border-color:#bce4d6}
+  .f-no,.p-no{background:#f1f3f7;color:#6b7688;border-color:#dde3ec}
+  .p-parcial{background:var(--amber-soft);color:#8a5c07;border-color:#ecd9ab}
 
   .del{border:none;background:none;color:#b9c2cf;cursor:pointer;font-size:16px;
     line-height:1;padding:4px 6px;border-radius:6px}
@@ -156,7 +175,9 @@
             <th style="text-align:right">Valor anual</th>
             <th>Acuerdo</th>
             <th>Contrato</th>
-            <th>Notas</th>
+            <th>Emitida factura</th>
+            <th>Pagado</th>
+            <th>Comentarios</th>
             <th></th>
           </tr>
         </thead>
@@ -165,7 +186,7 @@
           <tr>
             <td colspan="3">Total comprometido</td>
             <td style="text-align:right" id="footTotal">—</td>
-            <td colspan="4"></td>
+            <td colspan="6"></td>
           </tr>
         </tfoot>
       </table>
@@ -177,7 +198,7 @@
   </div>
 
   <div class="legend">
-    <b>Cómo se usa:</b> escribe directamente en patrocinador, valor y notas; cambia los desplegables de acuerdo y contrato. Todo se guarda automáticamente.<br>
+    <b>Cómo se usa:</b> escribe directamente en patrocinador, valor y comentarios; cambia los desplegables de acuerdo, contrato, factura y pago. La flecha ▸ junto al patrocinador despliega persona de contacto, email y teléfono (se pone en verde cuando hay datos). Todo se guarda automáticamente.<br>
     <b>Acuerdo máster Espacio Torrelodones:</b> los 6.000 € cubren el pecho de SUB14, SUB16, SUB18, Sénior M y Sénior F. Cargados en SUB14·Pecho; el resto figura como <i>Incluido (0 €)</i> para no duplicar.
   </div>
 </div>
@@ -241,6 +262,8 @@
   var ACUERDOS = [["confirmado","Confirmado"],["negociacion","En negociación"],
     ["incluido","Incluido (máster)"],["regalo","Regalo"],["vacante","Vacante"]];
   var CONTRATOS = [["firmado","Firmado"],["pendiente","Pendiente firma"],["no","Sin contrato"]];
+  var FACTURA = [["no","Sin emitir"],["si","Emitida"]];
+  var PAGADO = [["no","No"],["parcial","Parcial"],["si","Pagado"]];
 
   var state = [];
   var hasStorage = false;
@@ -253,13 +276,23 @@
 
   function uid(){return "r"+Math.random().toString(36).slice(2,9);}
 
-  function withIds(arr){return arr.map(function(r){var o={};for(var k in r)o[k]=r[k];o.id=uid();return o;});}
+  function normRow(r){
+    if(r.fact==null) r.fact="no";
+    if(r.pag==null) r.pag="no";
+    if(r.n==null) r.n="";
+    if(r.cn==null) r.cn="";
+    if(r.em==null) r.em="";
+    if(r.ph==null) r.ph="";
+    return r;
+  }
+
+  function withIds(arr){return arr.map(function(r){var o={};for(var k in r)o[k]=r[k];o.id=uid();return normRow(o);});}
 
   async function load(){
     if(hasStorage){
       try{
         var raw = window.localStorage.getItem(KEY);
-        if(raw){ state = JSON.parse(raw); return; }
+        if(raw){ state = JSON.parse(raw); state.forEach(normRow); return; }
       }catch(e){ /* corrupto -> seed */ }
       state = withIds(SEED);
       await persist(true);
@@ -289,6 +322,14 @@
   }
 
   function row(id){return state.filter(function(r){return r.id===id;})[0];}
+
+  var expanded = {};
+  function isExpanded(id){return !!expanded[id];}
+  function hasContact(r){return !!((r.cn&&r.cn.trim())||(r.em&&r.em.trim())||(r.ph&&r.ph.trim()));}
+  function contactField(id,f,label,val,type){
+    return '<label class="cfield"><span>'+label+'</span>'
+      +'<input class="cinput" type="'+type+'" data-id="'+id+'" data-f="'+f+'" value="'+val+'" placeholder="—"></label>';
+  }
 
   function computeKpis(){
     var total=0,confirmado=0,firmados=0,conPatro=0,vacantes=0,negoc=0;
@@ -348,15 +389,26 @@
       html+='<tr'+(newCat?' class="catstart"':'')+'>'
         +'<td>'+(newCat?'<div class="catcell">'+esc(r.cl)+'<small>'+esc(r.c)+'</small></div>':'')+'</td>'
         +'<td class="poscell">'+esc(r.p)+'</td>'
-        +'<td><input class="cell" data-id="'+r.id+'" data-f="s" value="'+esc(r.s)+'" placeholder="—"></td>'
+        +'<td><div class="spwrap">'
+          +'<button class="caret'+(isExpanded(r.id)?' open':'')+(hasContact(r)?' filled':'')+'" data-toggle="'+r.id+'" title="Datos de contacto" aria-expanded="'+(isExpanded(r.id)?'true':'false')+'">▸</button>'
+          +'<input class="cell" data-id="'+r.id+'" data-f="s" value="'+esc(r.s)+'" placeholder="—"></div></td>'
         +'<td><input class="cell money" type="number" min="0" step="50" data-id="'+r.id+'" data-f="v" value="'+(Number(r.v)||0)+'"></td>'
         +'<td>'+selectHTML("","s-",ACUERDOS,r.a,r.id,"a")+'</td>'
         +'<td>'+selectHTML("","c-",CONTRATOS,r.ct,r.id,"ct")+'</td>'
+        +'<td>'+selectHTML("","f-",FACTURA,r.fact,r.id,"fact")+'</td>'
+        +'<td>'+selectHTML("","p-",PAGADO,r.pag,r.id,"pag")+'</td>'
         +'<td><input class="cell notes" data-id="'+r.id+'" data-f="n" value="'+esc(r.n)+'" placeholder="—"></td>'
         +'<td><button class="del" data-del="'+r.id+'" title="Eliminar fila">×</button></td>'
         +'</tr>';
+      if(isExpanded(r.id)){
+        html+='<tr class="detailrow"><td></td><td colspan="9"><div class="contactbox">'
+          +contactField(r.id,"cn","Persona de contacto",esc(r.cn),"text")
+          +contactField(r.id,"em","Email",esc(r.em),"email")
+          +contactField(r.id,"ph","Teléfono",esc(r.ph),"tel")
+          +'</div></td></tr>';
+      }
     });
-    if(!rows.length) html='<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--muted)">Sin resultados con estos filtros.</td></tr>';
+    if(!rows.length) html='<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--muted)">Sin resultados con estos filtros.</td></tr>';
     document.getElementById("tbody").innerHTML=html;
     renderKpis();
   }
@@ -387,9 +439,13 @@
     r[f]=t.value;
     if(f==="a"){ t.className="badge s-"+t.value; }
     if(f==="ct"){ t.className="badge c-"+t.value; }
+    if(f==="fact"){ t.className="badge f-"+t.value; }
+    if(f==="pag"){ t.className="badge p-"+t.value; }
     renderKpis(); queueSave();
   });
   document.getElementById("tbody").addEventListener("click",function(e){
+    var tg=e.target.getAttribute("data-toggle");
+    if(tg){ expanded[tg] = !expanded[tg]; render(); return; }
     var id=e.target.getAttribute("data-del"); if(!id) return;
     var r=row(id);
     if(confirm("¿Eliminar la fila “"+(r&&r.cl?r.cl+" · "+r.p:"")+"”?")){
@@ -412,7 +468,7 @@
   document.getElementById("addBtn").addEventListener("click",function(){
     var base = filterCat!=="all" ? state.filter(function(r){return r.c===filterCat;})[0] : null;
     var nr={id:uid(),c:base?base.c:"NUEVA",cl:base?base.cl:"Nueva categoría",
-      p:"Posición",s:"",v:0,a:"vacante",ct:"no",n:""};
+      p:"Posición",s:"",v:0,a:"vacante",ct:"no",fact:"no",pag:"no",n:"",cn:"",em:"",ph:""};
     var idx = base ? lastIndexOfCat(base.c)+1 : state.length;
     state.splice(idx,0,nr);
     render(); queueSave();
@@ -420,12 +476,14 @@
   function lastIndexOfCat(c){var i=-1;state.forEach(function(r,k){if(r.c===c)i=k;});return i;}
 
   document.getElementById("csvBtn").addEventListener("click",function(){
-    var head=["Categoría","Posición","Patrocinador","Valor anual (€)","Acuerdo","Contrato","Notas"];
+    var head=["Categoría","Posición","Patrocinador","Valor anual (€)","Acuerdo","Contrato","Emitida factura","Pagado","Persona de contacto","Email","Teléfono","Comentarios"];
     var amap={};ACUERDOS.forEach(function(o){amap[o[0]]=o[1];});
     var cmap={};CONTRATOS.forEach(function(o){cmap[o[0]]=o[1];});
+    var fmap={};FACTURA.forEach(function(o){fmap[o[0]]=o[1];});
+    var pmap={};PAGADO.forEach(function(o){pmap[o[0]]=o[1];});
     var lines=[head.join(";")];
     state.forEach(function(r){
-      lines.push([r.cl,r.p,r.s,(Number(r.v)||0),amap[r.a]||r.a,cmap[r.ct]||r.ct,r.n]
+      lines.push([r.cl,r.p,r.s,(Number(r.v)||0),amap[r.a]||r.a,cmap[r.ct]||r.ct,fmap[r.fact]||r.fact,pmap[r.pag]||r.pag,r.cn||"",r.em||"",r.ph||"",r.n]
         .map(function(x){return '"'+String(x).replace(/"/g,'""')+'"';}).join(";"));
     });
     var blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
